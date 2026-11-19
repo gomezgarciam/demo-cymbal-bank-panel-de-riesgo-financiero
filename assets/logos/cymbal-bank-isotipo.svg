@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <title>Cymbal Bank — Isotipo Oficial</title>
+  <g class="cymbal-emblem">
+    <path d="M 104.914 95.965 A 51.920 51.920 0 1 1 51.439 13.622 L 55.721 30.796 A 34.220 34.220 0 1 0 90.966 85.068 Z" fill="#1A73E8" />
+    <path d="M 60.378 12.206 A 51.920 51.920 0 0 1 104.914 32.035 L 90.966 42.932 A 34.220 34.220 0 0 0 61.613 29.863 Z" fill="#0F9D58" />
+    <circle cx="64.000" cy="64.000" r="13.570" fill="#12161F" />
+  </g>
+</svg>

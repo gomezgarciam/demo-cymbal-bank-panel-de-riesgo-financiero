@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 430" width="1200" height="430">
+  <rect width="1200" height="430" fill="#FFFFFF" />
+
+  <!-- Left Card: Light Surface (#F8F9FA) -->
+  <rect x="0" y="0" width="584" height="370" rx="14" fill="#F8F9FA" stroke="#DADCE0" stroke-width="1.5" />
+  <rect x="24" y="22" width="184" height="26" rx="13" fill="#E8F0FE" />
+  <text x="116" y="39" text-anchor="middle" font-family="Roboto" font-weight="700" font-size="11.5" fill="#1A73E8">VERSIÓN PRINCIPAL · CLARO</text>
+  <text x="560" y="39" text-anchor="end" font-family="Roboto" font-weight="500" font-size="11.5" fill="#5F6368">Fondo #F8F9FA</text>
+
+  <g transform="translate(74.00, 128.00) scale(1.0200)">
+  <g class="cymbal-emblem">
+    <path d="M 84.672 77.089 A 44.000 44.000 0 1 1 39.355 7.307 L 42.984 21.861 A 29.000 29.000 0 1 0 72.852 67.854 Z" fill="#1A73E8" />
+    <path d="M 46.931 6.107 A 44.000 44.000 0 0 1 84.672 22.911 L 72.852 32.146 A 29.000 29.000 0 0 0 47.977 21.071 Z" fill="#0F9D58" />
+    <circle cx="50.000" cy="50.000" r="11.500" fill="#12161F" />
+  </g>
+    <text x="116" y="56" font-family="Roboto" font-weight="700" font-size="52" letter-spacing="-0.8" fill="#12161F">Cymbal</text>
+    <text x="301" y="56" font-family="Roboto" font-weight="300" font-size="52" letter-spacing="-0.4" fill="#12161F">Bank</text>
+    <text x="118" y="81" font-family="Roboto" font-weight="500" font-size="11.5" letter-spacing="1.6" fill="#5F6368">BANCA CORPORATIVA Y GESTIÓN DE RIESGOS</text>
+  </g>
+
+  <line x1="24" y1="316" x2="560" y2="316" stroke="#DADCE0" stroke-width="1" />
+  <circle cx="34" cy="343" r="6" fill="#1A73E8" />
+  <text x="48" y="347" font-family="Roboto" font-weight="500" font-size="11.5" fill="#12161F">#1A73E8</text>
+  <circle cx="128" cy="343" r="6" fill="#0F9D58" />
+  <text x="142" y="347" font-family="Roboto" font-weight="500" font-size="11.5" fill="#12161F">#0F9D58</text>
+  <circle cx="222" cy="343" r="6" fill="#12161F" />
+  <text x="236" y="347" font-family="Roboto" font-weight="500" font-size="11.5" fill="#12161F">#12161F</text>
+  <text x="560" y="347" text-anchor="end" font-family="Roboto" font-weight="400" font-size="11" fill="#5F6368">Inter / Roboto · Contraste 17.4:1</text>
+
+  <!-- Right Card: Dark Surface (#12161F) -->
+  <rect x="616" y="0" width="584" height="370" rx="14" fill="#12161F" stroke="#2A3142" stroke-width="1.5" />
+  <rect x="640" y="22" width="184" height="26" rx="13" fill="#1E293B" />
+  <text x="732" y="39" text-anchor="middle" font-family="Roboto" font-weight="700" font-size="11.5" fill="#8AB4F8">VERSIÓN MODO OSCURO</text>
+  <text x="1176" y="39" text-anchor="end" font-family="Roboto" font-weight="500" font-size="11.5" fill="#9AA0A6">Fondo #12161F</text>
+
+  <g transform="translate(690.00, 128.00) scale(1.0200)">
+  <g class="cymbal-emblem">
+    <path d="M 84.672 77.089 A 44.000 44.000 0 1 1 39.355 7.307 L 42.984 21.861 A 29.000 29.000 0 1 0 72.852 67.854 Z" fill="#1A73E8" />
+    <path d="M 46.931 6.107 A 44.000 44.000 0 0 1 84.672 22.911 L 72.852 32.146 A 29.000 29.000 0 0 0 47.977 21.071 Z" fill="#0F9D58" />
+    <circle cx="50.000" cy="50.000" r="11.500" fill="#F8F9FA" />
+  </g>
+    <text x="116" y="56" font-family="Roboto" font-weight="700" font-size="52" letter-spacing="-0.8" fill="#F8F9FA">Cymbal</text>
+    <text x="301" y="56" font-family="Roboto" font-weight="300" font-size="52" letter-spacing="-0.4" fill="#F8F9FA">Bank</text>
+    <text x="118" y="81" font-family="Roboto" font-weight="500" font-size="11.5" letter-spacing="1.6" fill="#9AA0A6">BANCA CORPORATIVA Y GESTIÓN DE RIESGOS</text>
+  </g>
+
+  <line x1="640" y1="316" x2="1176" y2="316" stroke="#2A3142" stroke-width="1" />
+  <circle cx="650" cy="343" r="6" fill="#1A73E8" />
+  <text x="664" y="347" font-family="Roboto" font-weight="500" font-size="11.5" fill="#F8F9FA">#1A73E8</text>
+  <circle cx="744" cy="343" r="6" fill="#0F9D58" />
+  <text x="758" y="347" font-family="Roboto" font-weight="500" font-size="11.5" fill="#F8F9FA">#0F9D58</text>
+  <circle cx="838" cy="343" r="6" fill="#F8F9FA" />
+  <text x="852" y="347" font-family="Roboto" font-weight="500" font-size="11.5" fill="#F8F9FA">#F8F9FA</text>
+  <text x="1176" y="347" text-anchor="end" font-family="Roboto" font-weight="400" font-size="11" fill="#9AA0A6">Tableros de riesgo y portadas ejecutivas</text>
+
+  <!-- Footer caption -->
+  <text x="0" y="408" font-family="Roboto" font-weight="500" font-size="12.5" fill="#5F6368">Figura 1. Logotipo horizontal oficial de Cymbal Bank en superficies claras (#F8F9FA) y oscuras (#12161F), reservando #D93025 y #F9AB00 exclusivamente para alertas de riesgo.</text>
+</svg>

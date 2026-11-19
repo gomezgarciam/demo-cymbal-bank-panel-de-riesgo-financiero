@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 350" width="1200" height="350">
+  <rect width="1200" height="350" fill="#FFFFFF" />
+
+  <!-- Don't 1: Stretching / Distortion (cleanly contained inside Card 1!) -->
+  <rect x="0" y="0" width="282" height="296" rx="14" fill="#FFF8F8" stroke="#F6C8C4" stroke-width="1.5" />
+  <rect x="16" y="16" width="144" height="24" rx="12" fill="#D93025" />
+  <text x="88" y="32" text-anchor="middle" font-family="Roboto" font-weight="700" font-size="11" fill="#FFFFFF">✗  NO DISTORSIONAR</text>
+  <g transform="translate(34, 96) scale(0.50, 0.94)">
+  <g transform="translate(0.00, 0.00) scale(1.0000)">
+  <g class="cymbal-emblem">
+    <path d="M 84.672 77.089 A 44.000 44.000 0 1 1 39.355 7.307 L 42.984 21.861 A 29.000 29.000 0 1 0 72.852 67.854 Z" fill="#1A73E8" />
+    <path d="M 46.931 6.107 A 44.000 44.000 0 0 1 84.672 22.911 L 72.852 32.146 A 29.000 29.000 0 0 0 47.977 21.071 Z" fill="#0F9D58" />
+    <circle cx="50.000" cy="50.000" r="11.500" fill="#12161F" />
+  </g>
+    <text x="116" y="65" font-family="Roboto" font-weight="700" font-size="52" letter-spacing="-0.8" fill="#12161F">Cymbal</text>
+    <text x="301" y="65" font-family="Roboto" font-weight="300" font-size="52" letter-spacing="-0.4" fill="#12161F">Bank</text>
+  </g>
+  </g>
+  <line x1="20" y1="220" x2="262" y2="220" stroke="#F6C8C4" stroke-width="1" />
+  <text x="18" y="244" font-family="Roboto" font-weight="700" font-size="11.5" fill="#D93025">Alteración de escala</text>
+  <text x="18" y="264" font-family="Roboto" font-weight="400" font-size="10.5" fill="#12161F">Prohibido estirar o comprimir</text>
+  <text x="18" y="280" font-family="Roboto" font-weight="400" font-size="10.5" fill="#12161F">el isotipo o la tipografía.</text>
+
+  <!-- Don't 2: Using Risk Alert Colors (#D93025 / #F9AB00) in Logo -->
+  <rect x="306" y="0" width="282" height="296" rx="14" fill="#FFF8F8" stroke="#F6C8C4" stroke-width="1.5" />
+  <rect x="322" y="16" width="194" height="24" rx="12" fill="#D93025" />
+  <text x="419" y="32" text-anchor="middle" font-family="Roboto" font-weight="700" font-size="11" fill="#FFFFFF">✗  NO USAR COLORES DE RIESGO</text>
+  <g transform="translate(328.00, 114.00) scale(0.5600)">
+  <g class="cymbal-emblem">
+    <path d="M 84.672 77.089 A 44.000 44.000 0 1 1 39.355 7.307 L 42.984 21.861 A 29.000 29.000 0 1 0 72.852 67.854 Z" fill="#D93025" />
+    <path d="M 46.931 6.107 A 44.000 44.000 0 0 1 84.672 22.911 L 72.852 32.146 A 29.000 29.000 0 0 0 47.977 21.071 Z" fill="#F9AB00" />
+    <circle cx="50.000" cy="50.000" r="11.500" fill="#D93025" />
+  </g>
+    <text x="116" y="65" font-family="Roboto" font-weight="700" font-size="52" letter-spacing="-0.8" fill="#D93025">Cymbal</text>
+    <text x="301" y="65" font-family="Roboto" font-weight="300" font-size="52" letter-spacing="-0.4" fill="#F9AB00">Bank</text>
+  </g>
+  <line x1="326" y1="220" x2="568" y2="220" stroke="#F6C8C4" stroke-width="1" />
+  <text x="324" y="244" font-family="Roboto" font-weight="700" font-size="11.5" fill="#D93025">Recoloreo semántico inválido</text>
+  <text x="324" y="264" font-family="Roboto" font-weight="400" font-size="10.5" fill="#12161F">#D93025 y #F9AB00 se reservan</text>
+  <text x="324" y="280" font-family="Roboto" font-weight="400" font-size="10.5" fill="#12161F">solo para alertas de riesgo.</text>
+
+  <!-- Don't 3: Low Contrast Background -->
+  <rect x="612" y="0" width="282" height="296" rx="14" fill="#FFF8F8" stroke="#F6C8C4" stroke-width="1.5" />
+  <rect x="628" y="16" width="178" height="24" rx="12" fill="#D93025" />
+  <text x="717" y="32" text-anchor="middle" font-family="Roboto" font-weight="700" font-size="11" fill="#FFFFFF">✗  SIN CONTRASTE WCAG AA</text>
+  <rect x="628" y="84" width="250" height="114" rx="10" fill="#1F4E8C" />
+  <g transform="translate(642.00, 114.00) scale(0.5300)">
+  <g class="cymbal-emblem">
+    <path d="M 84.672 77.089 A 44.000 44.000 0 1 1 39.355 7.307 L 42.984 21.861 A 29.000 29.000 0 1 0 72.852 67.854 Z" fill="#1A73E8" />
+    <path d="M 46.931 6.107 A 44.000 44.000 0 0 1 84.672 22.911 L 72.852 32.146 A 29.000 29.000 0 0 0 47.977 21.071 Z" fill="#0F9D58" />
+    <circle cx="50.000" cy="50.000" r="11.500" fill="#12161F" />
+  </g>
+    <text x="116" y="65" font-family="Roboto" font-weight="700" font-size="52" letter-spacing="-0.8" fill="#12161F">Cymbal</text>
+    <text x="301" y="65" font-family="Roboto" font-weight="300" font-size="52" letter-spacing="-0.4" fill="#12161F">Bank</text>
+  </g>
+  <line x1="632" y1="220" x2="874" y2="220" stroke="#F6C8C4" stroke-width="1" />
+  <text x="630" y="244" font-family="Roboto" font-weight="700" font-size="11.5" fill="#D93025">Fondos no autorizados</text>
+  <text x="630" y="264" font-family="Roboto" font-weight="400" font-size="10.5" fill="#12161F">No aplicar versión oscura sobre</text>
+  <text x="630" y="280" font-family="Roboto" font-weight="400" font-size="10.5" fill="#12161F">fondos azules o saturados.</text>
+
+  <!-- Don't 4: Rotation / Unapproved Font -->
+  <rect x="918" y="0" width="282" height="296" rx="14" fill="#FFF8F8" stroke="#F6C8C4" stroke-width="1.5" />
+  <rect x="934" y="16" width="214" height="24" rx="12" fill="#D93025" />
+  <text x="1041" y="32" text-anchor="middle" font-family="Roboto" font-weight="700" font-size="11" fill="#FFFFFF">✗  NO ROTAR NI CAMBIAR FUENTE</text>
+  <g transform="translate(1058, 146) rotate(-14) translate(-114, -24)">
+  <g class="cymbal-emblem">
+    <path d="M 46.030 42.086 A 22.880 22.880 0 1 1 22.465 5.800 L 24.352 13.368 A 15.080 15.080 0 1 0 39.883 37.284 Z" fill="#1A73E8" />
+    <path d="M 26.404 5.176 A 22.880 22.880 0 0 1 46.030 13.914 L 39.883 18.716 A 15.080 15.080 0 0 0 26.948 12.957 Z" fill="#0F9D58" />
+    <circle cx="28.000" cy="28.000" r="5.980" fill="#12161F" />
+  </g>
+    <text x="62" y="38" font-family="Liberation Serif" font-style="italic" font-weight="700" font-size="26" fill="#12161F">Cymbal Bank</text>
+  </g>
+  <line x1="938" y1="220" x2="1180" y2="220" stroke="#F6C8C4" stroke-width="1" />
+  <text x="936" y="244" font-family="Roboto" font-weight="700" font-size="11.5" fill="#D93025">Rotación y fuente ajena</text>
+  <text x="936" y="264" font-family="Roboto" font-weight="400" font-size="10.5" fill="#12161F">Mantener horizonte recto y usar</text>
+  <text x="936" y="280" font-family="Roboto" font-weight="400" font-size="10.5" fill="#12161F">únicamente Inter o Roboto.</text>
+
+  <text x="0" y="332" font-family="Roboto" font-weight="500" font-size="12.5" fill="#5F6368">Figura 4. Restricciones de uso prohibidas en interfaces, presentaciones ejecutivas y comunicaciones corporativas de Cymbal Bank.</text>
+</svg>

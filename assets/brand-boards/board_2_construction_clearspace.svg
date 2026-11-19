@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 440" width="1200" height="440">
+  <rect width="1200" height="440" fill="#FFFFFF" />
+
+  <!-- LEFT PANEL: Geometric Construction -->
+  <rect x="0" y="0" width="460" height="384" rx="14" fill="#F8F9FA" stroke="#DADCE0" stroke-width="1.5" />
+  <text x="22" y="32" font-family="Roboto" font-weight="700" font-size="13" fill="#12161F">A. RETÍCULA GEOMÉTRICA DEL ISOTIPO</text>
+  <line x1="55" y1="48" x2="55" y2="344" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="83" y1="48" x2="83" y2="344" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="111" y1="48" x2="111" y2="344" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="139" y1="48" x2="139" y2="344" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="167" y1="48" x2="167" y2="344" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="195" y1="48" x2="195" y2="344" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="223" y1="48" x2="223" y2="344" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="251" y1="48" x2="251" y2="344" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="279" y1="48" x2="279" y2="344" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="307" y1="48" x2="307" y2="344" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="335" y1="48" x2="335" y2="344" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="363" y1="48" x2="363" y2="344" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="391" y1="48" x2="391" y2="344" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="45" y1="56" x2="405" y2="56" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="45" y1="84" x2="405" y2="84" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="45" y1="112" x2="405" y2="112" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="45" y1="140" x2="405" y2="140" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="45" y1="168" x2="405" y2="168" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="45" y1="196" x2="405" y2="196" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="45" y1="224" x2="405" y2="224" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="45" y1="252" x2="405" y2="252" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="45" y1="280" x2="405" y2="280" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="45" y1="308" x2="405" y2="308" stroke="#E2E8F0" stroke-width="0.8" />  <line x1="45" y1="336" x2="405" y2="336" stroke="#E2E8F0" stroke-width="0.8" />
+
+  <circle cx="225" cy="196" r="110.0" fill="none" stroke="#94A3B8" stroke-width="1" stroke-dasharray="4 3" />
+  <circle cx="225" cy="196" r="72.5" fill="none" stroke="#94A3B8" stroke-width="1" stroke-dasharray="4 3" />
+  <circle cx="225" cy="196" r="28.8" fill="none" stroke="#94A3B8" stroke-width="1" stroke-dasharray="3 2" />
+
+  <line x1="65" y1="196" x2="385" y2="196" stroke="#94A3B8" stroke-width="1" stroke-dasharray="5 4" />
+  <line x1="225" y1="54" x2="225" y2="340" stroke="#94A3B8" stroke-width="1" stroke-dasharray="5 4" />
+  <line x1="225" y1="196" x2="333.7" y2="281.0" stroke="#1A73E8" stroke-width="1" stroke-dasharray="3 3" opacity="0.7" />
+  <line x1="225" y1="196" x2="333.7" y2="111.0" stroke="#0F9D58" stroke-width="1" stroke-dasharray="3 3" opacity="0.7" />
+  <line x1="225" y1="196" x2="191.6" y2="62.1" stroke="#12161F" stroke-width="1" stroke-dasharray="3 3" opacity="0.55" />
+  <line x1="225" y1="196" x2="215.4" y2="58.3" stroke="#12161F" stroke-width="1" stroke-dasharray="3 3" opacity="0.55" />
+
+  <g class="cymbal-emblem">
+    <path d="M 311.681 263.723 A 110.000 110.000 0 1 1 198.389 89.267 L 207.461 125.654 A 72.500 72.500 0 1 0 282.131 240.635 Z" fill="#1A73E8" />
+    <path d="M 217.327 86.268 A 110.000 110.000 0 0 1 311.681 128.277 L 282.131 151.365 A 72.500 72.500 0 0 0 219.943 123.677 Z" fill="#0F9D58" />
+    <circle cx="225.000" cy="196.000" r="28.750" fill="#12161F" />
+  </g>
+
+  <text x="352" y="191" font-family="Roboto" font-weight="700" font-size="11.5" fill="#1A73E8">76°</text>
+  <text x="348" y="206" font-family="Roboto" font-weight="400" font-size="10" fill="#5F6368">apertura</text>
+  <text x="138" y="64" font-family="Roboto" font-weight="700" font-size="11" fill="#0F9D58">10° corte</text>
+  <text x="22" y="366" font-family="Roboto" font-weight="500" font-size="11" fill="#5F6368">R_ext = 2x  ·  R_int = 1.32x  ·  Núcleo = 0.52x  ·  Grosor anillo = 0.68x</text>
+
+  <!-- RIGHT PANEL: Clearspace Blueprint -->
+  <rect x="492" y="0" width="708" height="384" rx="14" fill="#F8F9FA" stroke="#DADCE0" stroke-width="1.5" />
+  <text x="516" y="32" font-family="Roboto" font-weight="700" font-size="13" fill="#12161F">B. ZONA DE SEGURIDAD OBLIGATORIA (MÍNIMO = 1x EN TODOS LOS LADOS)</text>
+
+  <rect x="598.0" y="104.0" width="496.0" height="176.0" fill="#E8F0FE" fill-opacity="0.55" stroke="#1A73E8" stroke-width="1.5" stroke-dasharray="6 4" rx="6" />
+  <rect x="642.0" y="148.0" width="408.0" height="88.0" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1" />
+
+  <rect x="598.0" y="104.0" width="44.0" height="44.0" fill="#1A73E8" fill-opacity="0.18" stroke="#1A73E8" stroke-width="1" />
+  <text x="620.0" y="130.0" text-anchor="middle" font-family="Roboto" font-weight="700" font-size="12" fill="#1A73E8">1x</text>
+
+  <rect x="1050.0" y="104.0" width="44.0" height="44.0" fill="#1A73E8" fill-opacity="0.18" stroke="#1A73E8" stroke-width="1" />
+  <text x="1072.0" y="130.0" text-anchor="middle" font-family="Roboto" font-weight="700" font-size="12" fill="#1A73E8">1x</text>
+
+  <rect x="598.0" y="236.0" width="44.0" height="44.0" fill="#1A73E8" fill-opacity="0.18" stroke="#1A73E8" stroke-width="1" />
+  <text x="620.0" y="262.0" text-anchor="middle" font-family="Roboto" font-weight="700" font-size="12" fill="#1A73E8">1x</text>
+
+  <rect x="1050.0" y="236.0" width="44.0" height="44.0" fill="#1A73E8" fill-opacity="0.18" stroke="#1A73E8" stroke-width="1" />
+  <text x="1072.0" y="262.0" text-anchor="middle" font-family="Roboto" font-weight="700" font-size="12" fill="#1A73E8">1x</text>
+
+  <g transform="translate(636.00, 142.00) scale(1.0000)">
+  <g class="cymbal-emblem">
+    <path d="M 84.672 77.089 A 44.000 44.000 0 1 1 39.355 7.307 L 42.984 21.861 A 29.000 29.000 0 1 0 72.852 67.854 Z" fill="#1A73E8" />
+    <path d="M 46.931 6.107 A 44.000 44.000 0 0 1 84.672 22.911 L 72.852 32.146 A 29.000 29.000 0 0 0 47.977 21.071 Z" fill="#0F9D58" />
+    <circle cx="50.000" cy="50.000" r="11.500" fill="#12161F" />
+  </g>
+    <text x="116" y="65" font-family="Roboto" font-weight="700" font-size="52" letter-spacing="-0.8" fill="#12161F">Cymbal</text>
+    <text x="301" y="65" font-family="Roboto" font-weight="300" font-size="52" letter-spacing="-0.4" fill="#12161F">Bank</text>
+  </g>
+
+  <line x1="642.0" y1="308.0" x2="1050.0" y2="308.0" stroke="#12161F" stroke-width="1.2" />
+  <line x1="642.0" y1="302.0" x2="642.0" y2="314.0" stroke="#12161F" stroke-width="1.2" />
+  <line x1="1050.0" y1="302.0" x2="1050.0" y2="314.0" stroke="#12161F" stroke-width="1.2" />
+  <text x="846.0" y="328.0" text-anchor="middle" font-family="Roboto" font-weight="700" font-size="11.5" fill="#12161F">Ancho mínimo digital: 120 px  ·  Impreso: 32 mm  (1x = radio externo del isotipo)</text>
+
+  <text x="516" y="366" font-family="Roboto" font-weight="400" font-size="11" fill="#5F6368">Ningún texto, borde, botón o elemento gráfico puede invadir el perímetro punteado de seguridad.</text>
+
+  <text x="0" y="420" font-family="Roboto" font-weight="500" font-size="12.5" fill="#5F6368">Figura 2. Construcción modular concéntrica basada en la geometría de Cymbal (Google Cloud) y perímetro de resguardo 1x para preservar la legibilidad ejecutiva.</text>
+</svg>
