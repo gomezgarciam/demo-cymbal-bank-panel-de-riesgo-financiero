@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 476 144" width="476" height="144">
+  <title>Cymbal Bank — Logotipo Modo Oscuro</title>
+  <rect width="476" height="144" rx="14" fill="#12161F" />
+  <g transform="translate(28.00, 22.00) scale(1.0000)">
+  <g class="cymbal-emblem">
+    <path d="M 84.672 77.089 A 44.000 44.000 0 1 1 39.355 7.307 L 42.984 21.861 A 29.000 29.000 0 1 0 72.852 67.854 Z" fill="#1A73E8" />
+    <path d="M 46.931 6.107 A 44.000 44.000 0 0 1 84.672 22.911 L 72.852 32.146 A 29.000 29.000 0 0 0 47.977 21.071 Z" fill="#0F9D58" />
+    <circle cx="50.000" cy="50.000" r="11.500" fill="#F8F9FA" />
+  </g>
+    <text x="116" y="65" font-family="Roboto" font-weight="700" font-size="52" letter-spacing="-0.8" fill="#F8F9FA">Cymbal</text>
+    <text x="301" y="65" font-family="Roboto" font-weight="300" font-size="52" letter-spacing="-0.4" fill="#F8F9FA">Bank</text>
+  </g>
+</svg>
