@@ -21,21 +21,27 @@ build/
 dist/
 *.tsbuildinfo
 
-# Variables de entorno y secretos (NUNCA subir credenciales a Git)
+# Variables de entorno, llaves y secretos (NUNCA subir credenciales reales a Git)
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
 *.pem
 *.key
+*.p12
+*.pfx
+*.jks
 *service-account*.json
+*credentials*.json
+*secret*.json
 credentials.json
+adc.json
 
 # Google Cloud / Terraform / Infraestructura local
 .terraform/
 *.tfstate
 *.tfstate.*
+*.tfvars
+!*.tfvars.example
 .gcloud/
 firebase-debug.log
 firestore-debug.log
@@ -51,3 +57,4 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+apps/web/AGENTS.md

@@ -7,7 +7,8 @@ import time
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from app.config import settings
-from app.domain.fx import convert_amount, quantize_rate
+from app.domain.fx import convert_amount
+from app.domain.fx_provider import fetch_latest_fx_snapshot
 from app.domain.models import (
     ActorIdentity,
     AlertStatus,
@@ -162,23 +163,10 @@ def refresh_fx_rates(
     actor: ActorIdentity = Depends(require_roles(UserRole.RISK_ANALYST)),
     repo: RiskRepository = Depends(get_repository),
 ) -> FxRatesSnapshot:
-    """Simula ejecución del job Cloud Scheduler + FX con micro-actualización auditable."""
+    """Ejecuta el job Cloud Scheduler + FX (modo live con Secret Manager o determinístico local)."""
     start = time.perf_counter()
     current = repo.get_fx_snapshot()
-    # Ajuste determinístico acotado para demostrar sincronización en vivo de Cloud Scheduler + FX
-    step = (int(datetime.now(timezone.utc).timestamp()) % 5) - 2  # -2 a +2 pbs
-    delta_factor = Decimal("1") + (Decimal(step) * Decimal("0.0002"))
-    updated = FxRatesSnapshot(
-        base_currency=CurrencyCode.USD,
-        rates={
-            CurrencyCode.USD: Decimal("1.000000"),
-            CurrencyCode.EUR: quantize_rate(current.rates[CurrencyCode.EUR] * delta_factor),
-            CurrencyCode.MXN: quantize_rate(current.rates[CurrencyCode.MXN] * delta_factor),
-            CurrencyCode.COP: quantize_rate(current.rates[CurrencyCode.COP] * delta_factor),
-        },
-        as_of_utc=datetime.now(timezone.utc),
-        source="Cloud Scheduler + FX (Sincronización Verificada)",
-    )
+    updated = fetch_latest_fx_snapshot(current)
     saved = repo.save_fx_snapshot(updated)
     elapsed_ms = (time.perf_counter() - start) * 1000
     record_audit_event(
