@@ -147,12 +147,36 @@ Todo componente del panel web, gráfica, correo o reporte debe adherirse estrict
 
 ## 7. Estructura del Repositorio
 
-### Contenido Actual Sincronizado
-
 ```text
 .
 ├── README.md                                       # Documentación maestra del proyecto
+├── docker-compose.yml                              # Orquestación local full-stack (API + Web)
 ├── .gitignore                                      # Exclusiones para Next.js, Python, GCP y secretos
+├── apps/
+│   ├── api/                                        # Servicio Cloud Run: cymbal-riesgo-api (FastAPI + Python Decimal)
+│   │   ├── Dockerfile                              # Contenedor OCI de producción (no-root, puerto 8080)
+│   │   ├── pyproject.toml                          # Dependencias y configuración de pytest
+│   │   ├── app/
+│   │   │   ├── main.py                             # App FastAPI, CORS y middleware SLO (< 500 ms)
+│   │   │   ├── config.py                           # Configuración tipada (memory / firestore)
+│   │   │   ├── api/v1/routes.py                    # Endpoints REST /api/v1 (cartera, clientes, FX, estrés, alertas, auditoría)
+│   │   │   ├── domain/                             # Modelos Decimal, conversor FX y motor de estrés (EL/NPL/PD/LGD)
+│   │   │   ├── repositories/                       # Interfaz, semilla corporativa, memoria local y adaptador Cloud Firestore
+│   │   │   ├── security/auth.py                    # Identidad JWT/OIDC y control RBAC (CFO vs Analista de Riesgo)
+│   │   │   └── observability/audit.py              # Auditoría bancaria inmutable en JSON (Cloud Logging)
+│   │   └── tests/                                  # Suite pytest (precisión Decimal, FX, estrés, RBAC y SLO)
+│   └── web/                                        # Servicio Cloud Run: cymbal-riesgo-web (Next.js + TS + Recharts)
+│       ├── Dockerfile                              # Contenedor standalone Next.js (no-root, puerto 8080)
+│       ├── next.config.ts                          # Proxy interno /api/v1 y salida standalone
+│       ├── public/logos/                           # Activos oficiales de logotipo Cymbal Bank
+│       └── src/
+│           ├── app/                                # Layout (Inter/Roboto), sistema de diseño CSS y página principal
+│           ├── components/                         # TopBar, Resumen Ejecutivo, Cartera, Simulador, Alertas y Auditoría/FX
+│           ├── lib/                                # Cliente API tipado y formateadores tabulares ISO 4217
+│           └── types/                              # Contratos TypeScript alineados con /api/v1
+├── infra/
+│   ├── cloudbuild/cloudbuild.yaml                  # Pipeline CI/CD (pytest, Next build, Artifact Registry y Cloud Run)
+│   └── terraform/                                  # Blueprint IaC GCP (Cloud Run, Firestore, KMS CMEK, Armor, Scheduler)
 ├── docs/
 │   ├── architecture/
 │   │   ├── ARQUITECTURA_MVP.md                     # Especificación técnica detallada de las 5 capas
@@ -167,13 +191,27 @@ Todo componente del panel web, gráfica, correo o reporte debe adherirse estrict
     └── generate_cymbal_logos.py                    # Generador reproducible de activos vectoriales y láminas PNG
 ```
 
-### Estructura Objetivo de Implementación
+### Ejecución Local y Pruebas
 
-Durante las fases de desarrollo se incorporarán las carpetas operativas del monorepo:
+#### 1. Backend financiero (`cymbal-riesgo-api`)
 
-- `apps/web/` — Servicio Cloud Run `cymbal-riesgo-web` (Next.js + TypeScript + Recharts).
-- `apps/api/` — Servicio Cloud Run `cymbal-riesgo-api` (FastAPI + Python `Decimal`).
-- `infra/` — Definiciones de infraestructura como código (Terraform) y pipelines de `Cloud Build`.
+```bash
+cd apps/api
+uv venv .venv && uv pip install --python .venv/bin/python -e ".[dev]"
+.venv/bin/pytest -v
+.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+#### 2. Panel Web Ejecutivo (`cymbal-riesgo-web`)
+
+```bash
+cd apps/web
+npm install
+npm run lint && npm run build
+npm run dev
+```
+
+Con ambos servicios activos, el panel web consume `/api/v1/*` mediante proxy interno de Next.js hacia `http://127.0.0.1:8000` (configurable con `API_INTERNAL_URL`). También puede levantarse el entorno completo con `docker compose up --build`.
 
 ---
 
@@ -183,9 +221,9 @@ Durante las fases de desarrollo se incorporarán las carpetas operativas del mon
 | :--- | :--- | :---: |
 | **Fase 0 — Identidad y Gobernanza de Marca** | Guía de Marca, Guía de Logos, paleta oficial, activos SVG/PNG y láminas de uso. | Completada |
 | **Fase 1 — Arquitectura MVP y Repositorio Git** | Diagrama integral de 5 capas en Google Cloud, especificación técnica y sincronización inicial en GitHub. | Completada |
-| **Fase 2 — Backend Financiero (`cymbal-riesgo-api`)** | API REST `/api/v1` en FastAPI, Motor de Estrés (`EL`, `NPL`, `PD`, `LGD`) con `Python Decimal`, módulo FX y pruebas unitarias. | Pendiente |
-| **Fase 3 — Panel Web Ejecutivo (`cymbal-riesgo-web`)** | Interfaz Next.js + TypeScript + Recharts con selector multimoneda (`USD/EUR/MXN/COP`), tablero KPIs, simulador y alertas semafóricas. | Pendiente |
-| **Fase 4 — Datos, Seguridad y Despliegue GCP** | Integración Firestore, `Cloud Scheduler + FX`, `Identity Platform` (OIDC/MFA/RBAC), `Cloud Armor`, `Cloud KMS` y CI/CD en `Cloud Build` + `Cloud Run`. | Pendiente |
+| **Fase 2 — Backend Financiero (`cymbal-riesgo-api`)** | API REST `/api/v1` en FastAPI, Motor de Estrés (`EL`, `NPL`, `PD`, `LGD`) con `Python Decimal`, módulo FX, RBAC, auditoría JSON y 13 pruebas `pytest`. | Completada |
+| **Fase 3 — Panel Web Ejecutivo (`cymbal-riesgo-web`)** | Interfaz Next.js + TypeScript + Recharts + CSS oficial (Claro/Oscuro) con selector multimoneda (`USD/EUR/MXN/COP`), tablero KPIs, simulador, alertas y visor de auditoría. | Completada |
+| **Fase 4 — Datos, Seguridad y Despliegue GCP** | Adaptador `Cloud Firestore`, Dockerfiles Cloud Run, pipeline `Cloud Build` y blueprint `Terraform` (KMS CMEK, Secret Manager, Cloud Armor, Scheduler). Pendiente aprovisionamiento en proyecto GCP destino. | En progreso (IaC listo) |
 
 ---
 

@@ -1,0 +1,103 @@
+# Pipeline CI/CD — Google Cloud Build -> Artifact Registry -> Cloud Run
+# Cymbal Bank — Panel de Riesgo Financiero (MVP v1.0)
+
+substitutions:
+  _REGION: us-central1
+  _REPOSITORY: cymbal-riesgo-containers
+  _API_SERVICE: cymbal-riesgo-api
+  _WEB_SERVICE: cymbal-riesgo-web
+
+steps:
+  # 1. Pruebas unitarias y de RBAC/Decimal en cymbal-riesgo-api
+  - id: test-api
+    name: python:3.11-slim
+    dir: apps/api
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        pip install --no-cache-dir ".[dev]"
+        pytest -v
+
+  # 2. Validación de compilación TypeScript y Next.js en cymbal-riesgo-web
+  - id: test-web
+    name: node:22-alpine
+    dir: apps/web
+    entrypoint: sh
+    args:
+      - -c
+      - |
+        npm ci
+        npm run lint
+        npm run build
+
+  # 3. Construcción de imagen OCI cymbal-riesgo-api
+  - id: build-api-image
+    name: gcr.io/cloud-builders/docker
+    waitFor: ["test-api"]
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_API_SERVICE}:${SHORT_SHA}
+      - apps/api
+
+  # 4. Construcción de imagen OCI cymbal-riesgo-web
+  - id: build-web-image
+    name: gcr.io/cloud-builders/docker
+    waitFor: ["test-web"]
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_WEB_SERVICE}:${SHORT_SHA}
+      - apps/web
+
+  # 5. Publicación de contenedores verificados en Artifact Registry
+  - id: push-api-image
+    name: gcr.io/cloud-builders/docker
+    waitFor: ["build-api-image"]
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_API_SERVICE}:${SHORT_SHA}
+
+  - id: push-web-image
+    name: gcr.io/cloud-builders/docker
+    waitFor: ["build-web-image"]
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_WEB_SERVICE}:${SHORT_SHA}
+
+  # 6. Despliegue Serverless en Google Cloud Run (API)
+  - id: deploy-api
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    waitFor: ["push-api-image"]
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_API_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_API_SERVICE}:${SHORT_SHA}
+      - --region=${_REGION}
+      - --platform=managed
+      - --set-env-vars=CYMBAL_APP_ENV=production,CYMBAL_STORAGE_BACKEND=firestore,CYMBAL_GCP_PROJECT_ID=${PROJECT_ID},CYMBAL_ALLOW_DEMO_HEADERS=false
+      - --no-allow-unauthenticated
+
+  # 7. Despliegue Serverless en Google Cloud Run (Web)
+  - id: deploy-web
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    waitFor: ["push-web-image", "deploy-api"]
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_WEB_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_WEB_SERVICE}:${SHORT_SHA}
+      - --region=${_REGION}
+      - --platform=managed
+      - --ingress=internal-and-cloud-load-balancing
+
+images:
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_API_SERVICE}:${SHORT_SHA}
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_WEB_SERVICE}:${SHORT_SHA}
+
+options:
+  logging: CLOUD_LOGGING_ONLY
