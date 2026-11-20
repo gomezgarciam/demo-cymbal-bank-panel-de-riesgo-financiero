@@ -1,0 +1,231 @@
+#!/usr/bin/env bash
+# Despliegue seguro, idempotente y aislado (Multi-Demo) en Google Cloud Platform.
+# Uso en Google Cloud Shell:
+#   ./infra/scripts/deploy_gcp.sh <TU_PROJECT_ID> [us-central1] [demo|enterprise]
+#
+# Aislamiento en proyectos compartidos:
+#   - Intenta crear/usar la base Firestore dedicada 'cymbal-riesgo-db' (respaldo seguro a memoria si IAM lo restringe)
+#   - Prefijo único en todos los recursos: cymbal-riesgo-*
+#   - Etiquetas de facturación y filtrado: demo=cymbal-riesgo, app=panel-riesgo-financiero
+# Seguridad: NO contiene ni escribe API keys, Project IDs ni credenciales en Git.
+
+set -euo pipefail
+
+PROJECT_ID="${1:-${GOOGLE_CLOUD_PROJECT:-}}"
+REGION="${2:-us-central1}"
+MODE="${3:-demo}"
+
+DEMO_PREFIX="cymbal-riesgo"
+REPO_NAME="${DEMO_PREFIX}-containers"
+FIRESTORE_DB="${DEMO_PREFIX}-db"
+API_SERVICE="${DEMO_PREFIX}-api"
+WEB_SERVICE="${DEMO_PREFIX}-web"
+SCHEDULER_JOB="${DEMO_PREFIX}-fx-hourly"
+SECRET_NAME="${DEMO_PREFIX}-fx-api-key"
+API_SA_ID="${DEMO_PREFIX}-api-sa"
+SCHED_SA_ID="${DEMO_PREFIX}-scheduler-sa"
+LABELS="demo=${DEMO_PREFIX},app=panel-riesgo-financiero,managed-by=deploy-script"
+TAG="$(git rev-parse --short HEAD 2>/dev/null || date +%Y%m%d%H%M%S)"
+
+if [[ -z "${PROJECT_ID}" ]]; then
+  echo "ERROR: Debes indicar el PROJECT_ID de GCP (o tener GOOGLE_CLOUD_PROJECT activo en Cloud Shell)."
+  echo "Uso: ./infra/scripts/deploy_gcp.sh <TU_PROJECT_ID> [us-central1] [demo|enterprise]"
+  exit 1
+fi
+
+if [[ "${MODE}" != "demo" && "${MODE}" != "enterprise" ]]; then
+  echo "ERROR: Modo inválido '${MODE}'. Usa 'demo' o 'enterprise'."
+  exit 1
+fi
+
+echo "==> Proyecto GCP: ${PROJECT_ID} | Región: ${REGION} | Modo: ${MODE} | Tag: ${TAG}"
+echo "==> Aislamiento Multi-Demo: prefijo '${DEMO_PREFIX}-*' | Firestore DB '${FIRESTORE_DB}'"
+gcloud config set project "${PROJECT_ID}" >/dev/null
+
+echo "==> 1/7 Habilitando APIs de Google Cloud..."
+gcloud services enable \
+  run.googleapis.com \
+  cloudbuild.googleapis.com \
+  artifactregistry.googleapis.com \
+  firestore.googleapis.com \
+  secretmanager.googleapis.com \
+  cloudkms.googleapis.com \
+  cloudscheduler.googleapis.com \
+  logging.googleapis.com \
+  monitoring.googleapis.com || echo "Aviso: algunas APIs opcionales no pudieron habilitarse; continuando..."
+
+echo "==> 2/7 Verificando Artifact Registry (${REPO_NAME})..."
+if ! gcloud artifacts repositories describe "${REPO_NAME}" --location="${REGION}" >/dev/null 2>&1; then
+  gcloud artifacts repositories create "${REPO_NAME}" \
+    --repository-format=docker \
+    --location="${REGION}" \
+    --labels="${LABELS}" \
+    --description="Contenedores verificados de Cymbal Bank — Panel de Riesgo Financiero"
+fi
+
+echo "==> 3/7 Verificando base de datos Cloud Firestore aislada (${FIRESTORE_DB})..."
+STORAGE_BACKEND="firestore"
+ACTIVE_FIRESTORE_DB="${FIRESTORE_DB}"
+if gcloud firestore databases describe --database="${FIRESTORE_DB}" >/dev/null 2>&1; then
+  echo "    Base Firestore '${FIRESTORE_DB}' encontrada."
+elif gcloud firestore databases create --database="${FIRESTORE_DB}" --location="${REGION}" --type=firestore-native >/dev/null 2>&1; then
+  echo "    Base Firestore '${FIRESTORE_DB}' creada exitosamente."
+elif gcloud firestore databases describe --database="(default)" >/dev/null 2>&1; then
+  echo "    Aviso IAM: sin permiso para crear DB nombrada; usando base '(default)' existente."
+  ACTIVE_FIRESTORE_DB="(default)"
+else
+  echo "    Aviso IAM: sin permiso para aprovisionar Firestore en este proyecto sandbox."
+  echo "    Continuando en modo 'memory' (100% funcional en Cloud Run con la cartera precargada)."
+  STORAGE_BACKEND="memory"
+fi
+
+echo "==> 4/7 Verificando cuentas de servicio de mínimo privilegio..."
+API_SA="${API_SA_ID}@${PROJECT_ID}.iam.gserviceaccount.com"
+SCHED_SA="${SCHED_SA_ID}@${PROJECT_ID}.iam.gserviceaccount.com"
+USE_CUSTOM_API_SA="true"
+USE_CUSTOM_SCHED_SA="true"
+
+if ! gcloud iam service-accounts describe "${API_SA}" >/dev/null 2>&1; then
+  if ! gcloud iam service-accounts create "${API_SA_ID}" --display-name="Cymbal Bank — API Riesgo Financiero" >/dev/null 2>&1; then
+    echo "    Aviso IAM: sin permiso para crear '${API_SA_ID}'; Cloud Run usará la cuenta de servicio por defecto."
+    USE_CUSTOM_API_SA="false"
+  fi
+fi
+
+if ! gcloud iam service-accounts describe "${SCHED_SA}" >/dev/null 2>&1; then
+  if ! gcloud iam service-accounts create "${SCHED_SA_ID}" --display-name="Cymbal Bank — Cloud Scheduler FX" >/dev/null 2>&1; then
+    USE_CUSTOM_SCHED_SA="false"
+  fi
+fi
+
+if [[ "${USE_CUSTOM_API_SA}" == "true" ]]; then
+  for ROLE in roles/datastore.user roles/logging.logWriter roles/monitoring.metricWriter roles/secretmanager.secretAccessor; do
+    gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+      --member="serviceAccount:${API_SA}" \
+      --role="${ROLE}" --quiet >/dev/null 2>&1 || true
+  done
+fi
+
+API_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${API_SERVICE}:${TAG}"
+WEB_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${WEB_SERVICE}:${TAG}"
+
+build_and_push_image() {
+  local CONTEXT_DIR="$1"
+  local IMAGE_URI="$2"
+  if gcloud builds submit "${CONTEXT_DIR}" --tag "${IMAGE_URI}"; then
+    return 0
+  fi
+  echo "    Aviso Cloud Build IAM: usando build local con Docker en Cloud Shell y push directo a Artifact Registry..."
+  gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+  docker build --platform linux/amd64 -t "${IMAGE_URI}" "${CONTEXT_DIR}"
+  docker push "${IMAGE_URI}"
+}
+
+echo "==> 5/7 Construyendo y publicando imágenes verificadas en Artifact Registry..."
+build_and_push_image "./apps/api" "${API_IMAGE}"
+build_and_push_image "./apps/web" "${WEB_IMAGE}"
+
+echo "==> 6/7 Desplegando servicios serverless en Google Cloud Run..."
+if [[ "${MODE}" == "demo" ]]; then
+  APP_ENV="staging"
+  ALLOW_DEMO="true"
+  INGRESS="all"
+else
+  APP_ENV="production"
+  ALLOW_DEMO="false"
+  INGRESS="internal-and-cloud-load-balancing"
+fi
+
+API_DEPLOY_ARGS=(
+  run deploy "${API_SERVICE}"
+  --image "${API_IMAGE}"
+  --region "${REGION}"
+  --ingress "${INGRESS}"
+  --labels "${LABELS}"
+  --no-allow-unauthenticated
+  --set-env-vars "CYMBAL_APP_ENV=${APP_ENV},CYMBAL_STORAGE_BACKEND=${STORAGE_BACKEND},CYMBAL_GCP_PROJECT_ID=${PROJECT_ID},CYMBAL_FIRESTORE_DATABASE=${ACTIVE_FIRESTORE_DB},CYMBAL_FX_SECRET_NAME=${SECRET_NAME},CYMBAL_ALLOW_DEMO_HEADERS=${ALLOW_DEMO},CYMBAL_FX_PROVIDER_MODE=live,CYMBAL_SCHEDULER_SERVICE_ACCOUNT=${SCHED_SA},CYMBAL_OIDC_ISSUER=https://securetoken.google.com/${PROJECT_ID}"
+)
+if [[ "${USE_CUSTOM_API_SA}" == "true" ]]; then
+  API_DEPLOY_ARGS+=(--service-account "${API_SA}")
+fi
+
+gcloud "${API_DEPLOY_ARGS[@]}"
+API_URL="$(gcloud run services describe "${API_SERVICE}" --region "${REGION}" --format='value(status.url)')"
+
+# Permite invocación autenticada servicio-a-servicio desde Cloud Run web (cuenta por defecto) hacia API
+PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)' 2>/dev/null || true)"
+if [[ -n "${PROJECT_NUMBER}" ]]; then
+  gcloud run services add-iam-policy-binding "${API_SERVICE}" \
+    --region "${REGION}" \
+    --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+    --role="roles/run.invoker" --quiet >/dev/null 2>&1 || true
+fi
+
+gcloud run deploy "${WEB_SERVICE}" \
+  --image "${WEB_IMAGE}" \
+  --region "${REGION}" \
+  --ingress "${INGRESS}" \
+  --labels "${LABELS}" \
+  --no-allow-unauthenticated \
+  --set-env-vars "API_INTERNAL_URL=${API_URL}"
+
+WEB_URL="$(gcloud run services describe "${WEB_SERVICE}" --region "${REGION}" --format='value(status.url)')"
+
+PUBLIC_ACCESS_ENABLED="false"
+if [[ "${MODE}" == "demo" ]]; then
+  echo "    Intentando habilitar acceso público demo (allUsers)..."
+  if gcloud run services add-iam-policy-binding "${API_SERVICE}" --region "${REGION}" --member="allUsers" --role="roles/run.invoker" --quiet >/dev/null 2>&1 \
+     && gcloud run services add-iam-policy-binding "${WEB_SERVICE}" --region "${REGION}" --member="allUsers" --role="roles/run.invoker" --quiet >/dev/null 2>&1; then
+    PUBLIC_ACCESS_ENABLED="true"
+  else
+    echo "    Aviso Org Policy: 'allUsers' está bloqueado por política organizacional (Domain Restricted Sharing)."
+    echo "    Usa el proxy autenticado de Cloud Shell para abrir el panel de forma segura:"
+    echo "      gcloud run services proxy ${WEB_SERVICE} --region ${REGION} --port 8080"
+  fi
+fi
+
+echo "==> 7/7 Configurando Cloud Scheduler + FX (${SCHEDULER_JOB})..."
+if [[ "${USE_CUSTOM_SCHED_SA}" == "true" ]]; then
+  gcloud run services add-iam-policy-binding "${API_SERVICE}" \
+    --region "${REGION}" \
+    --member="serviceAccount:${SCHED_SA}" \
+    --role="roles/run.invoker" --quiet >/dev/null 2>&1 || true
+
+  if gcloud scheduler jobs describe "${SCHEDULER_JOB}" --location="${REGION}" >/dev/null 2>&1; then
+    gcloud scheduler jobs update http "${SCHEDULER_JOB}" \
+      --location="${REGION}" \
+      --schedule="0 * * * *" \
+      --time-zone="UTC" \
+      --uri="${API_URL}/api/v1/fx/refresh" \
+      --http-method=POST \
+      --oidc-service-account-email="${SCHED_SA}" \
+      --oidc-token-audience="${PROJECT_ID}" >/dev/null 2>&1 || echo "    Aviso: no se pudo actualizar Cloud Scheduler (permisos IAM)."
+  else
+    gcloud scheduler jobs create http "${SCHEDULER_JOB}" \
+      --location="${REGION}" \
+      --schedule="0 * * * *" \
+      --time-zone="UTC" \
+      --uri="${API_URL}/api/v1/fx/refresh" \
+      --http-method=POST \
+      --oidc-service-account-email="${SCHED_SA}" \
+      --oidc-token-audience="${PROJECT_ID}" >/dev/null 2>&1 || echo "    Aviso: no se pudo crear Cloud Scheduler (permisos IAM)."
+  fi
+else
+  echo "    Aviso: Cloud Scheduler omitido por restricciones IAM de Service Accounts en el sandbox."
+fi
+
+echo ""
+echo "=================================================================="
+echo "Despliegue Multi-Demo completado en Google Cloud Run (${MODE})"
+echo "  Storage      : ${STORAGE_BACKEND} (DB: ${ACTIVE_FIRESTORE_DB})"
+echo "  Labels       : ${LABELS}"
+echo "  API URL      : ${API_URL}"
+echo "  WEB URL      : ${WEB_URL}"
+echo "=================================================================="
+if [[ "${PUBLIC_ACCESS_ENABLED}" == "true" ]]; then
+  echo "Verificando /api/v1/health..."
+  curl -fsS "${API_URL}/api/v1/health" && echo ""
+else
+  echo "Para abrir el panel autenticado desde Cloud Shell (Web Preview puerto 8080):"
+  echo "  gcloud run services proxy ${WEB_SERVICE} --region ${REGION} --port 8080"
+fi

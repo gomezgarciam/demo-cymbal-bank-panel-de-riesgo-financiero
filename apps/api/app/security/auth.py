@@ -1,8 +1,10 @@
-"""Capa de Seguridad e Identidad (JWT / OIDC + RBAC) para cymbal-riesgo-api."""
+"""Capa de Seguridad e Identidad (Identity Platform OIDC JWT + Cloud Scheduler + RBAC)."""
+
+from __future__ import annotations
 
 import base64
 import json
-from typing import Callable
+from typing import Any, Callable
 
 from fastapi import Depends, Header, HTTPException, Request, status
 
@@ -28,13 +30,8 @@ DEMO_PROFILES: dict[UserRole, ActorIdentity] = {
 }
 
 
-def _decode_unverified_jwt_payload(token: str) -> dict | None:
-    """Extrae claims JWT en entornos de demo/desarrollo cuando se envía Bearer token.
-
-    En producción sobre Google Cloud Run + Identity Platform, la verificación de firma
-    RS256 y audiencia (aud/iss) se delega al SDK oficial de Firebase/Identity Platform
-    o a Cloud Endpoints / IAP antes de aceptar claims.
-    """
+def _decode_unverified_jwt_payload(token: str) -> dict[str, Any] | None:
+    """Decodifica claims JWT solo en entornos de desarrollo local."""
     parts = token.split(".")
     if len(parts) != 3:
         return None
@@ -46,29 +43,110 @@ def _decode_unverified_jwt_payload(token: str) -> dict | None:
         return None
 
 
+def verify_oidc_jwt(token: str) -> dict[str, Any]:
+    """Verifica criptográficamente un JWT emitido por Identity Platform / Google OIDC.
+
+    En producción valida firma RS256, expiración, audiencia (aud == gcp_project_id)
+    y emisor (iss). Lanza ValueError si el token es inválido o caducado.
+    """
+    try:
+        from google.auth.transport import requests as google_requests  # type: ignore
+        from google.oauth2 import id_token  # type: ignore
+    except ImportError as exc:
+        raise RuntimeError(
+            "El paquete google-auth es obligatorio para verificación OIDC en producción."
+        ) from exc
+
+    request_adapter = google_requests.Request()
+    # Intenta primero token de Identity Platform / Firebase y luego OIDC estándar de Google (Cloud Scheduler)
+    try:
+        claims = id_token.verify_firebase_token(
+            token, request_adapter, audience=settings.gcp_project_id
+        )
+    except Exception:
+        claims = id_token.verify_oauth2_token(
+            token, request_adapter, audience=settings.gcp_project_id
+        )
+
+    if settings.oidc_issuer and claims.get("iss") != settings.oidc_issuer:
+        # Permitir emisor accounts.google.com solo para Cloud Scheduler SA autorizado
+        if claims.get("iss") not in ("https://accounts.google.com", "accounts.google.com"):
+            raise ValueError("Emisor OIDC (iss) no autorizado.")
+    return claims
+
+
+def _actor_from_claims(claims: dict[str, Any], provider: str) -> ActorIdentity:
+    email = str(claims.get("email", "")).strip()
+    # Soporte para Service Account de Cloud Scheduler autorizado
+    if (
+        settings.scheduler_service_account
+        and email
+        and email.lower() == settings.scheduler_service_account.lower()
+    ):
+        return ActorIdentity(
+            email=email,
+            full_name="Cloud Scheduler + FX (Service Account)",
+            role=UserRole.RISK_ANALYST,
+            auth_provider="gcp-cloud-scheduler-oidc",
+            mfa_verified=True,
+        )
+
+    raw_role = str(claims.get("role", "")).strip().lower()
+    if raw_role not in (UserRole.CFO.value, UserRole.RISK_ANALYST.value):
+        raise ValueError("El token OIDC no contiene un claim RBAC válido ('cfo' o 'risk_analyst').")
+
+    role = UserRole(raw_role)
+    return ActorIdentity(
+        email=email or DEMO_PROFILES[role].email,
+        full_name=str(claims.get("name", DEMO_PROFILES[role].full_name)),
+        role=role,
+        auth_provider=provider,
+        mfa_verified=bool(claims.get("mfa", True)),
+    )
+
+
 def get_current_actor(
     request: Request,
     authorization: str | None = Header(default=None),
     x_cymbal_role: str | None = Header(default=None),
     x_cymbal_user: str | None = Header(default=None),
 ) -> ActorIdentity:
-    """Resuelve la identidad autenticada y su rol RBAC para la petición actual."""
+    """Resuelve y valida la identidad autenticada y su rol RBAC."""
     if authorization and authorization.lower().startswith("bearer "):
         token = authorization.split(" ", 1)[1].strip()
-        claims = _decode_unverified_jwt_payload(token)
-        if claims and claims.get("role") in (UserRole.CFO.value, UserRole.RISK_ANALYST.value):
-            role = UserRole(claims["role"])
-            actor = ActorIdentity(
-                email=str(claims.get("email", DEMO_PROFILES[role].email)),
-                full_name=str(claims.get("name", DEMO_PROFILES[role].full_name)),
-                role=role,
-                auth_provider="identity-platform-jwt",
-                mfa_verified=bool(claims.get("mfa", True)),
-            )
-            request.state.actor = actor
-            return actor
+        if settings.effective_demo_headers_allowed:
+            claims = _decode_unverified_jwt_payload(token)
+            if claims:
+                try:
+                    actor = _actor_from_claims(claims, "identity-platform-jwt-dev")
+                    request.state.actor = actor
+                    return actor
+                except ValueError:
+                    pass
+        else:
+            try:
+                claims = verify_oidc_jwt(token)
+                actor = _actor_from_claims(claims, "identity-platform-oidc-verified")
+                request.state.actor = actor
+                return actor
+            except Exception as exc:
+                record_audit_event(
+                    action="AUTH_TOKEN_REJECTED",
+                    actor=None,
+                    http_method=request.method,
+                    path=request.url.path,
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    latency_ms=0.0,
+                    severity="WARNING",
+                    outcome="DENIED",
+                    details={"reason": str(exc)},
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Token OIDC/JWT inválido o no autorizado por Identity Platform.",
+                ) from exc
 
-    if settings.allow_demo_headers and x_cymbal_role:
+    if settings.effective_demo_headers_allowed and x_cymbal_role:
         normalized = x_cymbal_role.strip().lower()
         if normalized not in (UserRole.CFO.value, UserRole.RISK_ANALYST.value):
             raise HTTPException(
@@ -87,11 +165,22 @@ def get_current_actor(
         request.state.actor = actor
         return actor
 
-    if settings.allow_demo_headers:
+    if settings.effective_demo_headers_allowed:
         actor = DEMO_PROFILES[UserRole.CFO]
         request.state.actor = actor
         return actor
 
+    record_audit_event(
+        action="AUTH_TOKEN_REJECTED",
+        actor=None,
+        http_method=request.method,
+        path=request.url.path,
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        latency_ms=0.0,
+        severity="WARNING",
+        outcome="DENIED",
+        details={"reason": "Cabecera Authorization Bearer requerida en producción."},
+    )
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Token OIDC/JWT requerido por Identity Platform.",

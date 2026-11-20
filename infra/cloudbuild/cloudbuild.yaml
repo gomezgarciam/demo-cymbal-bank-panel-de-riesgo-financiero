@@ -78,7 +78,8 @@ steps:
       - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_API_SERVICE}:${SHORT_SHA}
       - --region=${_REGION}
       - --platform=managed
-      - --set-env-vars=CYMBAL_APP_ENV=production,CYMBAL_STORAGE_BACKEND=firestore,CYMBAL_GCP_PROJECT_ID=${PROJECT_ID},CYMBAL_ALLOW_DEMO_HEADERS=false
+      - --labels=demo=cymbal-riesgo,app=panel-riesgo-financiero
+      - --set-env-vars=CYMBAL_APP_ENV=production,CYMBAL_STORAGE_BACKEND=firestore,CYMBAL_GCP_PROJECT_ID=${PROJECT_ID},CYMBAL_FIRESTORE_DATABASE=cymbal-riesgo-db,CYMBAL_FX_SECRET_NAME=cymbal-riesgo-fx-api-key,CYMBAL_ALLOW_DEMO_HEADERS=false
       - --no-allow-unauthenticated
 
   # 7. Despliegue Serverless en Google Cloud Run (Web)
@@ -93,6 +94,7 @@ steps:
       - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_WEB_SERVICE}:${SHORT_SHA}
       - --region=${_REGION}
       - --platform=managed
+      - --labels=demo=cymbal-riesgo,app=panel-riesgo-financiero
       - --ingress=internal-and-cloud-load-balancing
 
 images:

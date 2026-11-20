@@ -174,12 +174,15 @@ Todo componente del panel web, gráfica, correo o reporte debe adherirse estrict
 │           ├── components/                         # TopBar, Resumen Ejecutivo, Cartera, Simulador, Alertas y Auditoría/FX
 │           ├── lib/                                # Cliente API tipado y formateadores tabulares ISO 4217
 │           └── types/                              # Contratos TypeScript alineados con /api/v1
+├── .github/workflows/ci-security.yml               # CI GitHub Actions (escáner de secretos, pytest, Next build, Terraform)
 ├── infra/
 │   ├── cloudbuild/cloudbuild.yaml                  # Pipeline CI/CD (pytest, Next build, Artifact Registry y Cloud Run)
-│   └── terraform/                                  # Blueprint IaC GCP (Cloud Run, Firestore, KMS CMEK, Armor, Scheduler)
+│   ├── scripts/deploy_gcp.sh                       # Script idempotente 1-comando para despliegue en Google Cloud Shell
+│   └── terraform/                                  # IaC GCP (Cloud Run, Firestore, KMS CMEK, Armor OWASP, Scheduler, SLO)
 ├── docs/
 │   ├── architecture/
 │   │   ├── ARQUITECTURA_MVP.md                     # Especificación técnica detallada de las 5 capas
+│   │   ├── DESPLIEGUE_GCP.md                       # Guía de despliegue en GCP, Secret Manager y OIDC/RBAC
 │   │   └── arquitectura-mvp-cymbal-bank.jpg        # Diagrama oficial de arquitectura del MVP v1.0
 │   └── brand/
 │       ├── GUIA_DE_MARCA.md                        # Estándar de identidad visual, paleta, tipografía y tono CFO
@@ -188,7 +191,8 @@ Todo componente del panel web, gráfica, correo o reporte debe adherirse estrict
 │   ├── logos/                                      # 6 variantes oficiales en formato vectorial SVG y PNG
 │   └── brand-boards/                               # 4 láminas técnicas de marca (construcción, variantes y restricciones)
 └── scripts/
-    └── generate_cymbal_logos.py                    # Generador reproducible de activos vectoriales y láminas PNG
+    ├── generate_cymbal_logos.py                    # Generador reproducible de activos vectoriales y láminas PNG
+    └── scan_secrets.py                             # Escáner estático preventivo de API keys, tokens y credenciales
 ```
 
 ### Ejecución Local y Pruebas
@@ -213,6 +217,12 @@ npm run dev
 
 Con ambos servicios activos, el panel web consume `/api/v1/*` mediante proxy interno de Next.js hacia `http://127.0.0.1:8000` (configurable con `API_INTERNAL_URL`). También puede levantarse el entorno completo con `docker compose up --build`.
 
+#### 3. Auditoría previa a cada commit (Cero Secretos en Git)
+
+```bash
+python3 scripts/scan_secrets.py
+```
+
 ---
 
 ## 8. Hoja de Ruta del MVP
@@ -221,9 +231,9 @@ Con ambos servicios activos, el panel web consume `/api/v1/*` mediante proxy int
 | :--- | :--- | :---: |
 | **Fase 0 — Identidad y Gobernanza de Marca** | Guía de Marca, Guía de Logos, paleta oficial, activos SVG/PNG y láminas de uso. | Completada |
 | **Fase 1 — Arquitectura MVP y Repositorio Git** | Diagrama integral de 5 capas en Google Cloud, especificación técnica y sincronización inicial en GitHub. | Completada |
-| **Fase 2 — Backend Financiero (`cymbal-riesgo-api`)** | API REST `/api/v1` en FastAPI, Motor de Estrés (`EL`, `NPL`, `PD`, `LGD`) con `Python Decimal`, módulo FX, RBAC, auditoría JSON y 13 pruebas `pytest`. | Completada |
+| **Fase 2 — Backend Financiero (`cymbal-riesgo-api`)** | API REST `/api/v1` en FastAPI, Motor de Estrés (`EL`, `NPL`, `PD`, `LGD`) con `Python Decimal`, módulo FX, RBAC, auditoría JSON y pruebas `pytest`. | Completada |
 | **Fase 3 — Panel Web Ejecutivo (`cymbal-riesgo-web`)** | Interfaz Next.js + TypeScript + Recharts + CSS oficial (Claro/Oscuro) con selector multimoneda (`USD/EUR/MXN/COP`), tablero KPIs, simulador, alertas y visor de auditoría. | Completada |
-| **Fase 4 — Datos, Seguridad y Despliegue GCP** | Adaptador `Cloud Firestore`, Dockerfiles Cloud Run, pipeline `Cloud Build` y blueprint `Terraform` (KMS CMEK, Secret Manager, Cloud Armor, Scheduler). Pendiente aprovisionamiento en proyecto GCP destino. | En progreso (IaC listo) |
+| **Fase 4 — Datos, Seguridad GCP y CI/CD** | Verificación OIDC/JWT de `Identity Platform`, adaptador `Secret Manager`, `Cloud Firestore`, proveedor FX live `Decimal`, CI con escáner de secretos, `Terraform` (KMS CMEK, Armor OWASP, Scheduler, alerta SLO) y script `deploy_gcp.sh`. | Completada (listo para ejecutar en proyecto GCP) |
 
 ---
 
@@ -242,7 +252,8 @@ Este repositorio funciona como fuente única de verdad para sincronizar arquitec
    ```
    Prefijos recomendados: `feat/`, `fix/`, `docs/`, `infra/`, `chore/`.
 3. **Reglas de calidad y seguridad:**
-   - Nunca confirmar archivos `.env`, llaves privadas ni credenciales JSON de Google Cloud (usar `Secret Manager`).
+   - Nunca confirmar archivos `.env`, `*.tfvars`, llaves privadas ni credenciales JSON de Google Cloud (usar `Secret Manager` y plantillas `.example`).
+   - Ejecutar `python3 scripts/scan_secrets.py` antes de subir cambios (también se exige automáticamente en GitHub Actions).
    - Toda modificación de interfaz debe validar cumplimiento de paleta, contraste WCAG AA y `tabular-nums`.
    - Toda lógica financiera debe incluir pruebas automatizadas que verifiquen exactitud con `decimal.Decimal`.
 4. **Regeneración opcional de activos de logotipo (requiere `rsvg-convert` / `librsvg`):**
@@ -257,6 +268,7 @@ Este repositorio funciona como fuente única de verdad para sincronizar arquitec
 ### Documentación Versionada en el Repositorio
 
 - [Arquitectura Integral del MVP (`ARQUITECTURA_MVP.md`)](docs/architecture/ARQUITECTURA_MVP.md)
+- [Guía de Despliegue y Seguridad en Google Cloud (`DESPLIEGUE_GCP.md`)](docs/architecture/DESPLIEGUE_GCP.md)
 - [Diagrama de Arquitectura MVP v1.0 (`arquitectura-mvp-cymbal-bank.jpg`)](docs/architecture/arquitectura-mvp-cymbal-bank.jpg)
 - [Guía de Marca — Cymbal Bank (`GUIA_DE_MARCA.md`)](docs/brand/GUIA_DE_MARCA.md)
 - [Guía de Logos — Cymbal Bank (`GUIA_DE_LOGOS.md`)](docs/brand/GUIA_DE_LOGOS.md)

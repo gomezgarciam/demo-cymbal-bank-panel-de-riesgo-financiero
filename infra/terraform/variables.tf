@@ -9,6 +9,12 @@ variable "region" {
   default     = "us-central1"
 }
 
+variable "firestore_database_name" {
+  description = "Nombre de la base de datos Firestore dedicada a esta demo (evita colisiones con '(default)' en proyectos compartidos)."
+  type        = string
+  default     = "cymbal-riesgo-db"
+}
+
 variable "api_image" {
   description = "URL completa en Artifact Registry de la imagen de cymbal-riesgo-api."
   type        = string
@@ -17,4 +23,16 @@ variable "api_image" {
 variable "web_image" {
   description = "URL completa en Artifact Registry de la imagen de cymbal-riesgo-web."
   type        = string
+}
+
+variable "demo_public_mode" {
+  description = "Si es true, expone cymbal-riesgo-web públicamente en Cloud Run para demo; en producción usar false con Cloud Load Balancing + Cloud Armor."
+  type        = bool
+  default     = false
+}
+
+variable "fx_provider_mode" {
+  description = "Modo del proveedor FX: 'deterministic' o 'live'."
+  type        = string
+  default     = "live"
 }
