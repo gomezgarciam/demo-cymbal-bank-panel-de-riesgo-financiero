@@ -5,6 +5,7 @@ const apiInternalUrl =
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  allowedDevOrigins: ["*"],
   images: {
     unoptimized: true,
   },
