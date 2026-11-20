@@ -50,18 +50,21 @@ async function proxyToApi(
     "accept",
     "x-cymbal-role",
     "x-cymbal-user",
-    "authorization",
   ];
   for (const key of passThrough) {
     const val = req.headers.get(key);
     if (val) forwardHeaders.set(key, val);
   }
 
-  // En Cloud Run con IAM privado, inyecta ID token de servicio si el cliente no envió Bearer
-  if (!forwardHeaders.has("authorization")) {
-    const idToken = await getCloudRunIdToken(API_INTERNAL_URL);
-    if (idToken) {
-      forwardHeaders.set("authorization", `Bearer ${idToken}`);
+  // En Cloud Run (HTTPS), SIEMPRE usar un ID token con audiencia = API_INTERNAL_URL
+  // (el header Authorization entrante de `gcloud run services proxy` tiene audiencia del servicio WEB y daría 403).
+  const idToken = await getCloudRunIdToken(API_INTERNAL_URL);
+  if (idToken) {
+    forwardHeaders.set("authorization", `Bearer ${idToken}`);
+  } else {
+    const incomingAuth = req.headers.get("authorization");
+    if (incomingAuth) {
+      forwardHeaders.set("authorization", incomingAuth);
     }
   }
 
