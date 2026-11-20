@@ -1,7 +1,8 @@
 # Plantilla segura de variables Terraform (NUNCA subir terraform.tfvars real a Git)
-project_id       = "REPLACE_WITH_YOUR_GCP_PROJECT_ID"
-region           = "us-central1"
-api_image        = "us-central1-docker.pkg.dev/REPLACE_WITH_YOUR_GCP_PROJECT_ID/cymbal-riesgo-containers/cymbal-riesgo-api:latest"
-web_image        = "us-central1-docker.pkg.dev/REPLACE_WITH_YOUR_GCP_PROJECT_ID/cymbal-riesgo-containers/cymbal-riesgo-web:latest"
-demo_public_mode = true
-fx_provider_mode = "live"
+project_id              = "REPLACE_WITH_YOUR_GCP_PROJECT_ID"
+region                  = "us-central1"
+firestore_database_name = "cymbal-riesgo-db"
+api_image               = "us-central1-docker.pkg.dev/REPLACE_WITH_YOUR_GCP_PROJECT_ID/cymbal-riesgo-containers/cymbal-riesgo-api:latest"
+web_image               = "us-central1-docker.pkg.dev/REPLACE_WITH_YOUR_GCP_PROJECT_ID/cymbal-riesgo-containers/cymbal-riesgo-web:latest"
+demo_public_mode        = true
+fx_provider_mode        = "live"

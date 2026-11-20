@@ -1,5 +1,6 @@
 # Infraestructura como Código (Terraform) — Cymbal Bank Panel de Riesgo Financiero (MVP v1.0)
-# Cubre las 5 capas de la arquitectura en Google Cloud sin almacenar ningún secreto en Git.
+# Aislamiento Multi-Demo: base Firestore nombrada ('cymbal-riesgo-db'), prefijo 'cymbal-riesgo-*'
+# y etiquetas de facturación 'demo=cymbal-riesgo' sin almacenar ningún secreto en Git.
 
 terraform {
   required_version = ">= 1.6.0"
@@ -17,6 +18,12 @@ provider "google" {
 }
 
 locals {
+  demo_labels = {
+    demo       = "cymbal-riesgo"
+    app        = "panel-riesgo-financiero"
+    managed_by = "terraform"
+  }
+
   required_apis = toset([
     "run.googleapis.com",
     "firestore.googleapis.com",
@@ -45,6 +52,7 @@ resource "google_artifact_registry_repository" "containers" {
   repository_id = "cymbal-riesgo-containers"
   description   = "Imágenes verificadas de cymbal-riesgo-web y cymbal-riesgo-api"
   format        = "DOCKER"
+  labels        = local.demo_labels
   depends_on    = [google_project_service.enabled_apis]
 }
 
@@ -59,20 +67,22 @@ resource "google_kms_crypto_key" "cmek_key" {
   name            = "cymbal-riesgo-cmek"
   key_ring        = google_kms_key_ring.riesgo_ring.id
   rotation_period = "7776000s" # 90 días
+  labels          = local.demo_labels
 }
 
 # 3. Secret Manager (Contenedor del secreto; el valor se carga fuera de banda con gcloud)
 resource "google_secret_manager_secret" "fx_provider_key" {
-  secret_id = "cymbal-fx-provider-api-key"
+  secret_id = "cymbal-riesgo-fx-api-key"
+  labels    = local.demo_labels
   replication {
     auto {}
   }
   depends_on = [google_project_service.enabled_apis]
 }
 
-# 4. Cloud Firestore (Base documental: clientes, carteras, simulaciones, alertas, fx_rates)
-resource "google_firestore_database" "default" {
-  name        = "(default)"
+# 4. Cloud Firestore (Base documental nombrada aislada por demo)
+resource "google_firestore_database" "cymbal_db" {
+  name        = var.firestore_database_name
   location_id = var.region
   type        = "FIRESTORE_NATIVE"
   depends_on  = [google_project_service.enabled_apis]
@@ -141,7 +151,7 @@ resource "google_service_account" "web_sa" {
 }
 
 resource "google_service_account" "scheduler_sa" {
-  account_id   = "cymbal-fx-scheduler-sa"
+  account_id   = "cymbal-riesgo-scheduler-sa"
   display_name = "Cymbal Bank — Cloud Scheduler FX OIDC"
 }
 
@@ -174,7 +184,8 @@ resource "google_cloud_run_v2_service" "api" {
   name       = "cymbal-riesgo-api"
   location   = var.region
   ingress    = var.demo_public_mode ? "INGRESS_TRAFFIC_ALL" : "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
-  depends_on = [google_project_service.enabled_apis, google_firestore_database.default]
+  labels     = local.demo_labels
+  depends_on = [google_project_service.enabled_apis, google_firestore_database.cymbal_db]
 
   template {
     service_account = google_service_account.api_sa.email
@@ -195,6 +206,14 @@ resource "google_cloud_run_v2_service" "api" {
       env {
         name  = "CYMBAL_GCP_PROJECT_ID"
         value = var.project_id
+      }
+      env {
+        name  = "CYMBAL_FIRESTORE_DATABASE"
+        value = google_firestore_database.cymbal_db.name
+      }
+      env {
+        name  = "CYMBAL_FX_SECRET_NAME"
+        value = google_secret_manager_secret.fx_provider_key.secret_id
       }
       env {
         name  = "CYMBAL_ALLOW_DEMO_HEADERS"
@@ -235,6 +254,7 @@ resource "google_cloud_run_v2_service" "web" {
   name       = "cymbal-riesgo-web"
   location   = var.region
   ingress    = var.demo_public_mode ? "INGRESS_TRAFFIC_ALL" : "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
+  labels     = local.demo_labels
   depends_on = [google_cloud_run_v2_service.api]
 
   template {
@@ -263,8 +283,8 @@ resource "google_cloud_run_v2_service_iam_member" "web_public_demo" {
 
 # 9. Cloud Scheduler + FX (Actualización horaria de tasas USD/EUR/MXN/COP con OIDC)
 resource "google_cloud_scheduler_job" "fx_refresh" {
-  name        = "cymbal-fx-hourly-refresh"
-  description = "Actualiza tasas oficiales USD / EUR / MXN / COP en Cloud Firestore"
+  name        = "cymbal-riesgo-fx-hourly"
+  description = "Actualiza tasas oficiales USD / EUR / MXN / COP en Cloud Firestore (cymbal-riesgo-db)"
   schedule    = "0 * * * *"
   time_zone   = "UTC"
   depends_on  = [google_cloud_run_v2_service.api]

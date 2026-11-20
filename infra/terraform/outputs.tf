@@ -3,6 +3,11 @@ output "artifact_registry_repository" {
   value       = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.containers.repository_id}"
 }
 
+output "firestore_database_name" {
+  description = "Base de datos Cloud Firestore aislada para esta demo."
+  value       = google_firestore_database.cymbal_db.name
+}
+
 output "api_service_url" {
   description = "URL del servicio Cloud Run cymbal-riesgo-api."
   value       = google_cloud_run_v2_service.api.uri

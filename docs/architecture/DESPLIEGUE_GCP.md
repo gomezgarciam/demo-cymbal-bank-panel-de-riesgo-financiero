@@ -14,33 +14,46 @@ El repositorio incluye controles automáticos para impedir filtraciones accident
 
 ```bash
 # Ejecutar únicamente en Google Cloud Shell (NUNCA guardar el valor en archivos del repo)
-gcloud secrets create cymbal-fx-provider-api-key --replication-policy="automatic"
-printf '%s' "PEGAR_CLAVE_AQUI" | gcloud secrets versions add cymbal-fx-provider-api-key --data-file=-
+gcloud secrets create cymbal-riesgo-fx-api-key --replication-policy="automatic" --labels="demo=cymbal-riesgo"
+printf '%s' "PEGAR_CLAVE_AQUI" | gcloud secrets versions add cymbal-riesgo-fx-api-key --data-file=-
 ```
 
 > **Guardia de producción en código:** Cuando `CYMBAL_APP_ENV=production`, [`apps/api/app/config.py`](../../apps/api/app/config.py) deshabilita automáticamente las cabeceras demo (`effective_demo_headers_allowed == False`) sin importar el valor de `CYMBAL_ALLOW_DEMO_HEADERS`, exigiendo obligatoriamente tokens JWT OIDC firmados por **Identity Platform**.
 
 ---
 
-## 2. Opción A — Despliegue Rápido desde Google Cloud Shell (1 Comando)
+## 2. Aislamiento Multi-Demo en un Solo Proyecto GCP
 
-Ideal para levantar el MVP en minutos con **Cloud Run + Cloud Firestore + Artifact Registry + Cloud Scheduler + FX**:
+Si despliegas varias demos dentro del mismo proyecto sandbox de Google Cloud, todos los recursos de Cymbal Bank quedan aislados sin interferir con otras demos ni con la base `(default)`:
+
+- **Firestore dedicado:** base nombrada `cymbal-riesgo-db` (`CYMBAL_FIRESTORE_DATABASE=cymbal-riesgo-db`).
+- **Prefijo único:** `cymbal-riesgo-api`, `cymbal-riesgo-web`, `cymbal-riesgo-containers`, `cymbal-riesgo-fx-hourly`, `cymbal-riesgo-api-sa`, `cymbal-riesgo-scheduler-sa`.
+- **Etiquetas (`labels`):** `demo=cymbal-riesgo`, `app=panel-riesgo-financiero` para filtrar costos en Billing, logs y consola.
+
+---
+
+## 3. Opción A — Despliegue y Limpieza desde Google Cloud Shell (1 Comando)
+
+Ideal para levantar el MVP en minutos con **Cloud Run + Cloud Firestore (`cymbal-riesgo-db`) + Artifact Registry + Cloud Scheduler + FX**:
 
 ```bash
 git clone https://github.com/gomezgarciam/demo-cymbal-bank-panel-de-riesgo-financiero.git
 cd demo-cymbal-bank-panel-de-riesgo-financiero
-chmod +x infra/scripts/deploy_gcp.sh
+chmod +x infra/scripts/deploy_gcp.sh infra/scripts/cleanup_gcp.sh
 
-# Modo Demo (URL pública HTTPS en Cloud Run + Firestore + FX horario)
+# Modo Demo (URL pública HTTPS en Cloud Run + Firestore aislado + FX horario)
 ./infra/scripts/deploy_gcp.sh <TU_PROJECT_ID> us-central1 demo
 
 # Modo Enterprise (ingress interno para Load Balancer + Cloud Armor + Identity Platform OIDC estricto)
 ./infra/scripts/deploy_gcp.sh <TU_PROJECT_ID> us-central1 enterprise
+
+# Limpieza aislada (elimina SOLO los recursos cymbal-riesgo-* y la DB cymbal-riesgo-db)
+./infra/scripts/cleanup_gcp.sh <TU_PROJECT_ID> us-central1
 ```
 
 ---
 
-## 3. Opción B — Aprovisionamiento Declarativo con Terraform
+## 4. Opción B — Aprovisionamiento Declarativo con Terraform
 
 Para entornos corporativos auditables que incluyen **Cloud KMS (CMEK)**, **Cloud Armor (WAF OWASP + Rate Limiting 120 rpm)**, **Cloud Monitoring (alerta SLO p95 > 500 ms)** y cuentas IAM de mínimo privilegio:
 
@@ -56,7 +69,7 @@ terraform apply
 
 ---
 
-## 4. Configuración de Identity Platform (SSO OIDC + MFA + RBAC)
+## 5. Configuración de Identity Platform (SSO OIDC + MFA + RBAC)
 
 Para el modo `enterprise` (`CYMBAL_APP_ENV=production`):
 
@@ -68,7 +81,7 @@ Para el modo `enterprise` (`CYMBAL_APP_ENV=production`):
 
 ---
 
-## 5. Observabilidad y Auditoría Bancaria Inmutable
+## 6. Observabilidad y Auditoría Bancaria Inmutable
 
 - **Cloud Logging (Filtro de Auditoría):**
   ```text

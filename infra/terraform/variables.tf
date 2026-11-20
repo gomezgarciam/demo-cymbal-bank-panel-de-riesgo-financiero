@@ -9,6 +9,12 @@ variable "region" {
   default     = "us-central1"
 }
 
+variable "firestore_database_name" {
+  description = "Nombre de la base de datos Firestore dedicada a esta demo (evita colisiones con '(default)' en proyectos compartidos)."
+  type        = string
+  default     = "cymbal-riesgo-db"
+}
+
 variable "api_image" {
   description = "URL completa en Artifact Registry de la imagen de cymbal-riesgo-api."
   type        = string
