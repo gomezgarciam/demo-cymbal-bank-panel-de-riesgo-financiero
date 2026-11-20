@@ -109,9 +109,21 @@ fi
 API_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${API_SERVICE}:${TAG}"
 WEB_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${WEB_SERVICE}:${TAG}"
 
-echo "==> 5/7 Construyendo imágenes verificadas en Cloud Build..."
-gcloud builds submit ./apps/api --tag "${API_IMAGE}"
-gcloud builds submit ./apps/web --tag "${WEB_IMAGE}"
+build_and_push_image() {
+  local CONTEXT_DIR="$1"
+  local IMAGE_URI="$2"
+  if gcloud builds submit "${CONTEXT_DIR}" --tag "${IMAGE_URI}"; then
+    return 0
+  fi
+  echo "    Aviso Cloud Build IAM: usando build local con Docker en Cloud Shell y push directo a Artifact Registry..."
+  gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+  docker build --platform linux/amd64 -t "${IMAGE_URI}" "${CONTEXT_DIR}"
+  docker push "${IMAGE_URI}"
+}
+
+echo "==> 5/7 Construyendo y publicando imágenes verificadas en Artifact Registry..."
+build_and_push_image "./apps/api" "${API_IMAGE}"
+build_and_push_image "./apps/web" "${WEB_IMAGE}"
 
 echo "==> 6/7 Desplegando servicios serverless en Google Cloud Run..."
 if [[ "${MODE}" == "demo" ]]; then
@@ -139,6 +151,15 @@ fi
 
 gcloud "${API_DEPLOY_ARGS[@]}"
 API_URL="$(gcloud run services describe "${API_SERVICE}" --region "${REGION}" --format='value(status.url)')"
+
+# Permite invocación autenticada servicio-a-servicio desde Cloud Run web (cuenta por defecto) hacia API
+PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)' 2>/dev/null || true)"
+if [[ -n "${PROJECT_NUMBER}" ]]; then
+  gcloud run services add-iam-policy-binding "${API_SERVICE}" \
+    --region "${REGION}" \
+    --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+    --role="roles/run.invoker" --quiet >/dev/null 2>&1 || true
+fi
 
 gcloud run deploy "${WEB_SERVICE}" \
   --image "${WEB_IMAGE}" \
